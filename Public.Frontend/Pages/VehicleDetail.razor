@@ -1,0 +1,252 @@
+﻿@page "/vehicle/{VehicleId:guid}"
+@inject HttpClient Http
+@using Public.Frontend.Dtos
+
+@if (vehicle == null && string.IsNullOrEmpty(errorMessage))
+{
+    <div class="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        <p>Cargando vehículo...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="min-h-screen bg-gray-900 flex items-center justify-center text-red-400">
+        <p>@errorMessage</p>
+    </div>
+}
+else if (vehicle != null)
+{
+    <PageTitle>@vehicle.Brand @vehicle.Model</PageTitle>
+
+    <div class="min-h-screen bg-gray-900 text-white">
+        <div class="container mx-auto px-4 py-8">
+
+            <div class="mb-6">
+                <NavLink href="/" class="text-blue-400 hover:underline">&larr; Volver al Catálogo</NavLink>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <div class="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden mb-4 relative group"
+                         @ontouchstart="HandleTouchStart"
+                         @ontouchend="HandleTouchEnd"
+                         @ontouchmove="HandleTouchMove">
+                        <div class="flex items-center justify-center p-4">
+                            <img src="@($"http://localhost:8090/api/media{selectedImageUrl}")"
+                                 alt="Vista principal"
+                                 class="w-full h-auto max-h-[600px] object-contain select-none" />
+                        </div>
+
+                        @* Flechas de navegación - solo visible en desktop *@
+                        @if (vehicle.Images.Count > 1)
+                        {
+                            <button @onclick="PreviousImage"
+                                    class="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+
+                            <button @onclick="NextImage"
+                                    class="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+
+                            @* Indicador de posición *@
+                            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-sm">
+                                @(currentImageIndex + 1) / @vehicle.Images.Count
+                            </div>
+
+                            @* Puntos de navegación para mobile *@
+                            <div class="md:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                @for (int i = 0; i < vehicle.Images.Count; i++)
+                                {
+                                    var index = i;
+                                    <button @onclick="() => GoToImage(index)"
+                                            class="w-2 h-2 rounded-full transition-all @(currentImageIndex == index ? "bg-blue-500 w-6" : "bg-white/50")">
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="flex gap-2 overflow-x-auto pb-2">
+                        @foreach (var image in vehicle.Images.OrderBy(i => i.Position))
+                        {
+                            <button @onclick="() => SelectImage(image.Url)"
+                                    class="flex-shrink-0 bg-gray-800 rounded-md overflow-hidden hover:ring-2 hover:ring-blue-400 transition-all">
+                                <img src="@($"http://localhost:8090/api/media{image.Url}")"
+                                     alt="Miniatura"
+                                     class="w-24 h-24 object-contain p-2 border-2 rounded-md @(selectedImageUrl == image.Url ? "border-blue-500" : "border-transparent")" />
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <h1 class="text-3xl font-bold">@vehicle.Brand @vehicle.Model</h1>
+                    <p class="text-lg text-gray-400 mb-4">@vehicle.Year</p>
+
+                    @if (vehicle.Price.HasValue)
+                    {
+                        <p class="text-4xl font-bold text-blue-400 mb-6">$@vehicle.Price.Value.ToString("N0")</p>
+                    }
+                    else
+                    {
+                        <p class="text-2xl font-semibold text-gray-300 mb-6">Consultar Precio</p>
+                    }
+
+                    <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg mb-6">
+                        Consultar por WhatsApp
+                    </button>
+
+                    <div class="bg-gray-800 p-4 rounded-lg space-y-3">
+                        <div class="flex justify-between"><span class="text-gray-400">Kilometraje:</span> <strong>@vehicle.Mileage.ToString("N0") km</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Transmisión:</span> <strong>@GetTransmissionInSpanish()</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Tipo:</span> <strong>@vehicle.VehicleType</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Combustible:</span> <strong>@vehicle.FuelType</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Color:</span> <strong>@vehicle.Color</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                @if (!string.IsNullOrWhiteSpace(vehicle.Description))
+                {
+                    <div class="mb-8">
+                        <h3 class="text-2xl font-bold mb-2">Descripción</h3>
+                        <p class="text-gray-300 leading-relaxed">@vehicle.Description</p>
+                    </div>
+                }
+
+                @if (vehicle.Features.Any())
+                {
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4">Equipamiento Destacado</h3>
+                        <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            @foreach (var feature in vehicle.Features)
+                            {
+                                <li class="bg-gray-800 p-3 rounded-lg text-center">@feature.Name</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid VehicleId { get; set; }
+
+    private VehicleResponse? vehicle;
+    private string? errorMessage;
+    private string? selectedImageUrl;
+    private int currentImageIndex = 0;
+
+    // Variables para detectar swipe
+    private double touchStartX = 0;
+    private double touchEndX = 0;
+    private double touchStartY = 0;
+    private double touchEndY = 0;
+    private const double MinSwipeDistance = 50;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            vehicle = await Http.GetFromJsonAsync<VehicleResponse>($"api/vehicles/{VehicleId}");
+            if (vehicle != null && vehicle.Images.Any())
+            {
+                selectedImageUrl = vehicle.Images.OrderBy(i => i.Position).First().Url;
+                currentImageIndex = 0;
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "No se pudo cargar el vehículo. Es posible que ya no esté disponible.";
+        }
+    }
+
+    private void HandleTouchStart(TouchEventArgs e)
+    {
+        if (e.Touches.Length > 0)
+        {
+            touchStartX = e.Touches[0].ClientX;
+            touchStartY = e.Touches[0].ClientY;
+        }
+    }
+
+    private void HandleTouchMove(TouchEventArgs e)
+    {
+        if (e.Touches.Length > 0)
+        {
+            touchEndX = e.Touches[0].ClientX;
+            touchEndY = e.Touches[0].ClientY;
+        }
+    }
+
+    private void HandleTouchEnd(TouchEventArgs e)
+    {
+        var swipeDistanceX = touchStartX - touchEndX;
+        var swipeDistanceY = Math.Abs(touchStartY - touchEndY);
+
+        // Solo considerar swipe horizontal si el movimiento vertical es menor
+        if (Math.Abs(swipeDistanceX) > MinSwipeDistance && swipeDistanceY < 100)
+        {
+            if (swipeDistanceX > 0)
+            {
+                // Swipe left - siguiente imagen
+                NextImage();
+            }
+            else
+            {
+                // Swipe right - imagen anterior
+                PreviousImage();
+            }
+        }
+    }
+
+    private void SelectImage(string imageUrl)
+    {
+        selectedImageUrl = imageUrl;
+        currentImageIndex = vehicle.Images.OrderBy(i => i.Position).ToList().FindIndex(img => img.Url == imageUrl);
+    }
+
+    private void GoToImage(int index)
+    {
+        if (vehicle?.Images == null || !vehicle.Images.Any()) return;
+
+        var orderedImages = vehicle.Images.OrderBy(i => i.Position).ToList();
+        currentImageIndex = index;
+        selectedImageUrl = orderedImages[currentImageIndex].Url;
+    }
+
+    private void NextImage()
+    {
+        if (vehicle?.Images == null || !vehicle.Images.Any()) return;
+
+        var orderedImages = vehicle.Images.OrderBy(i => i.Position).ToList();
+        currentImageIndex = (currentImageIndex + 1) % orderedImages.Count;
+        selectedImageUrl = orderedImages[currentImageIndex].Url;
+    }
+
+    private void PreviousImage()
+    {
+        if (vehicle?.Images == null || !vehicle.Images.Any()) return;
+
+        var orderedImages = vehicle.Images.OrderBy(i => i.Position).ToList();
+        currentImageIndex = (currentImageIndex - 1 + orderedImages.Count) % orderedImages.Count;
+        selectedImageUrl = orderedImages[currentImageIndex].Url;
+    }
+
+    private string GetTransmissionInSpanish() => vehicle.Transmission switch
+    {
+        TransmissionType.Automatic => "Automática",
+        TransmissionType.Manual => "Manual",
+        _ => "No especificada"
+    };
+}

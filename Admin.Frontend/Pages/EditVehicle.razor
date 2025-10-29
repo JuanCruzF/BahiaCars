@@ -1,0 +1,419 @@
+﻿@page "/vehicles/edit/{VehicleId:guid}"
+@layout EmptyLayout
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using System.Net.Http.Headers
+@using Admin.Frontend.Dtos
+
+@if (vehicleForm == null)
+{
+    <div class="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <p class="text-gray-300 text-lg">Cargando datos del vehículo...</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="min-h-screen bg-gray-950">
+        <div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <EditForm Model="@vehicleForm" OnValidSubmit="HandleUpdate">
+                <!-- Header -->
+                <div class="mb-6">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-white mb-2">Editar Vehículo</h3>
+                    <p class="text-base sm:text-lg text-blue-400 font-medium">@vehicleForm.Brand @vehicleForm.Model</p>
+                    <p class="text-sm sm:text-base text-gray-400 mt-1">Modifica los datos del vehículo.</p>
+                </div>
+
+                <DataAnnotationsValidator />
+
+                <!-- Información Básica -->
+                <div class="bg-gray-900 rounded-lg p-4 sm:p-6 mb-4 border border-gray-800">
+                    <h4 class="text-lg sm:text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <span class="text-blue-500">📋</span>
+                        Información Básica
+                    </h4>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1.5">Marca</label>
+                            <InputText @bind-Value="vehicleForm.Brand"
+                                       class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                       placeholder="Ej: Toyota, Ford, Chevrolet" />
+                            <ValidationMessage For="@(() => vehicleForm.Brand)" class="text-red-400 text-xs mt-1 block" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1.5">Modelo</label>
+                            <InputText @bind-Value="vehicleForm.Model"
+                                       class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                       placeholder="Ej: Corolla, Focus, Cruze" />
+                            <ValidationMessage For="@(() => vehicleForm.Model)" class="text-red-400 text-xs mt-1 block" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1.5">Año</label>
+                                <InputNumber @bind-Value="vehicleForm.Year"
+                                             class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                             placeholder="2024" />
+                                <ValidationMessage For="@(() => vehicleForm.Year)" class="text-red-400 text-xs mt-1 block" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1.5">Kilometraje</label>
+                                <InputNumber @bind-Value="vehicleForm.Mileage"
+                                             class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                             placeholder="50000" />
+                                <ValidationMessage For="@(() => vehicleForm.Mileage)" class="text-red-400 text-xs mt-1 block" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1.5">Color</label>
+                                <InputText @bind-Value="vehicleForm.Color"
+                                           class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                           placeholder="Ej: Negro, Blanco, Gris" />
+                                <ValidationMessage For="@(() => vehicleForm.Color)" class="text-red-400 text-xs mt-1 block" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-1.5">Precio (opcional)</label>
+                                <InputNumber @bind-Value="vehicleForm.Price"
+                                             class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                             placeholder="15000000" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1.5">Transmisión</label>
+                            <InputSelect @bind-Value="vehicleForm.Transmission"
+                                         class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="@TransmissionType.Manual">Manual</option>
+                                <option value="@TransmissionType.Automatic">Automática</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => vehicleForm.Transmission)" class="text-red-400 text-xs mt-1 block" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1.5">Tipo de Vehículo</label>
+                            <InputSelect @bind-Value="vehicleForm.VehicleType"
+                                         class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="">-- Seleccionar Tipo --</option>
+                                @foreach (var type in Enum.GetValues(typeof(VehicleType)))
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => vehicleForm.VehicleType)" class="text-red-400 text-xs mt-1 block" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1.5">Tipo de Combustible</label>
+                            <InputSelect @bind-Value="vehicleForm.FuelType"
+                                         class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="@FuelType.Nafta">Nafta</option>
+                                <option value="@FuelType.Diesel">Diesel</option>
+                                <option value="@FuelType.GNC">Nafta + GNC</option>
+                                <option value="@FuelType.Hibrido">Híbrido</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => vehicleForm.FuelType)" class="text-red-400 text-xs mt-1 block" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1.5">Descripción</label>
+                            <InputTextArea @bind-Value="vehicleForm.Description"
+                                           class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-32 resize-y"
+                                           placeholder="Describe las características principales del vehículo..." />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipamiento -->
+                <div class="bg-gray-900 rounded-lg p-4 sm:p-6 mb-4 border border-gray-800">
+                    <h4 class="text-lg sm:text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <span class="text-blue-500">⚙️</span>
+                        Equipamiento
+                    </h4>
+
+                    @if (availableFeatures != null)
+                    {
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach (var feature in availableFeatures)
+                            {
+                                <label for="@($"feature-{feature.Id}")"
+                                       class="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg border border-gray-700 hover:border-blue-500 cursor-pointer transition-all group">
+                                    <input id="@($"feature-{feature.Id}")"
+                                           type="checkbox"
+                                           @onchange="@(e => ToggleFeature(feature.Id, e.Value))"
+                                           checked="@selectedFeatureIds.Contains(feature.Id)"
+                                           class="w-4 h-4 text-blue-500 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer" />
+                                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">@feature.Name</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="flex items-center justify-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                            <p class="ml-3 text-gray-400">Cargando equipamiento...</p>
+                        </div>
+                    }
+                </div>
+
+                <!-- Multimedia -->
+                <div class="bg-gray-900 rounded-lg p-4 sm:p-6 mb-6 border border-gray-800">
+                    <h4 class="text-lg sm:text-xl font-semibold text-white mb-2 flex items-center gap-2">
+                        <span class="text-blue-500">📸</span>
+                        Multimedia
+                    </h4>
+                    <p class="text-sm text-gray-400 mb-4">La primera imagen que subas será la portada.</p>
+
+                    <div class="mb-4">
+                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-700 border-dashed rounded-lg cursor-pointer bg-gray-800 hover:bg-gray-750 transition-all">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-8 h-8 mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                <p class="text-sm text-gray-400"><span class="font-semibold">Click para subir</span> o arrastra archivos</p>
+                            </div>
+                            <InputFile OnChange="LoadFiles" multiple class="hidden" />
+                        </label>
+                    </div>
+
+                    @if (isUploading)
+                    {
+                        <div class="flex items-center justify-center py-4 bg-gray-800 rounded-lg mb-4">
+                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                            <p class="ml-3 text-gray-300">Subiendo imágenes...</p>
+                        </div>
+                    }
+
+                    @if (uploadedFileUrls.Any())
+                    {
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            @foreach (var url in uploadedFileUrls)
+                            {
+                                <div class="relative group">
+                                    <img src="@($"http://localhost:8090/api/media{url}")"
+                                         class="w-full h-32 object-cover rounded-lg border border-gray-700"
+                                         alt="Vista previa" />
+                                    <button @onclick="async () => await RemoveImage(url)"
+                                            type="button"
+                                            class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                        ✕
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Error Message -->
+                @if (!string.IsNullOrEmpty(apiErrorMessage))
+                {
+                    <div class="bg-red-900/20 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-start gap-3">
+                        <span class="text-xl">⚠️</span>
+                        <p class="text-sm">@apiErrorMessage</p>
+                    </div>
+                }
+
+                <!-- Actions -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <button type="submit"
+                            disabled="@isSaving"
+                            class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl">
+                        @if (isSaving)
+                        {
+                            <span class="flex items-center justify-center gap-2">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Guardando cambios...
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Guardar Cambios</span>
+                        }
+                    </button>
+                    <NavLink href="/vehicles"
+                             class="flex-1 sm:flex-none text-center bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all border border-gray-700">
+                        Cancelar
+                    </NavLink>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid VehicleId { get; set; }
+
+    [Inject] private HttpClient Http { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private VehicleFormModel? vehicleForm;
+    private List<FeatureResponse>? availableFeatures;
+    private HashSet<Guid> selectedFeatureIds = new();
+    private List<string> uploadedFileUrls = new();
+    private bool isSaving = false;
+    private bool isUploading = false;
+    private string? apiErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var availableFeaturesTask = Http.GetFromJsonAsync<List<FeatureResponse>>("api/features");
+            var vehicleToEditTask = Http.GetFromJsonAsync<VehicleResponse>($"api/vehicles/{VehicleId}");
+
+            await Task.WhenAll(availableFeaturesTask, vehicleToEditTask);
+
+            availableFeatures = await availableFeaturesTask;
+            var vehicleToEdit = await vehicleToEditTask;
+
+            if (vehicleToEdit != null)
+            {
+                vehicleForm = new VehicleFormModel
+                {
+                    Brand = vehicleToEdit.Brand,
+                    Model = vehicleToEdit.Model,
+                    Year = vehicleToEdit.Year,
+                    Price = vehicleToEdit.Price,
+                    Mileage = vehicleToEdit.Mileage,
+                    Color = vehicleToEdit.Color,
+                    Description = vehicleToEdit.Description,
+                    Transmission = vehicleToEdit.Transmission,
+                    VehicleType = vehicleToEdit.VehicleType,
+                    FuelType = vehicleToEdit.FuelType
+                };
+
+                selectedFeatureIds = new HashSet<Guid>(vehicleToEdit.Features.Select(f => f.Id));
+                uploadedFileUrls = vehicleToEdit.Images.OrderBy(i => i.Position).Select(i => i.Url).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            apiErrorMessage = "Error al cargar los datos del vehículo para editar.";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (vehicleForm == null) return;
+        apiErrorMessage = null;
+        if (!uploadedFileUrls.Any())
+        {
+            apiErrorMessage = "Debes tener al menos una imagen.";
+            return;
+        }
+        isSaving = true;
+
+        var coverImageUrl = uploadedFileUrls.FirstOrDefault();
+
+        var dto = new VehicleDto(
+            vehicleForm.Brand!, vehicleForm.Model!, vehicleForm.Year!.Value, vehicleForm.Price,
+            vehicleForm.Mileage!.Value, vehicleForm.Color!, vehicleForm.Description,
+            selectedFeatureIds.ToList(), coverImageUrl, uploadedFileUrls,
+            vehicleForm.Transmission!.Value,
+            vehicleForm.VehicleType!.Value,
+            vehicleForm.FuelType!.Value
+        );
+
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/vehicles/{VehicleId}", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/vehicles");
+            }
+            else
+            {
+                apiErrorMessage = "Error al guardar los cambios.";
+            }
+        }
+        catch (Exception)
+        {
+            apiErrorMessage = "Error de conexión.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void ToggleFeature(Guid featureId, object? isChecked)
+    {
+        if (isChecked is bool and true) { selectedFeatureIds.Add(featureId); }
+        else { selectedFeatureIds.Remove(featureId); }
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        isUploading = true;
+        apiErrorMessage = null;
+        StateHasChanged();
+
+        foreach (var file in e.GetMultipleFiles().Take(10))
+        {
+            try
+            {
+                using var content = new MultipartFormDataContent();
+                using var fileStream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 50);
+                using var streamContent = new StreamContent(fileStream);
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+                content.Add(content: streamContent, name: "file", fileName: file.Name);
+
+                var response = await Http.PostAsync("api/media/upload", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<UploadResponseDto>();
+                    if (result?.Url != null)
+                    {
+                        uploadedFileUrls.Add(result.Url);
+                    }
+                }
+                else
+                {
+                    apiErrorMessage = $"Error al subir el archivo {file.Name}.";
+                }
+            }
+            catch (Exception ex)
+            {
+                apiErrorMessage = $"Error al subir el archivo {file.Name}: {ex.Message}";
+            }
+        }
+        isUploading = false;
+        StateHasChanged();
+    }
+
+    private async Task RemoveImage(string urlToRemove)
+    {
+        try
+        {
+            var filePathToDelete = urlToRemove.TrimStart('/');
+            var response = await Http.DeleteAsync($"api/media/{filePathToDelete}");
+
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                uploadedFileUrls.Remove(urlToRemove);
+                StateHasChanged();
+            }
+            else
+            {
+                apiErrorMessage = "No se pudo borrar la imagen del servidor.";
+            }
+        }
+        catch (Exception)
+        {
+            apiErrorMessage = "Error de conexión al intentar borrar la imagen.";
+        }
+    }
+}

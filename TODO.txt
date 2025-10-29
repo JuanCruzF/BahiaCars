@@ -1,0 +1,33 @@
+Persistencia en base de datos para cuando se haga un build desde 0
+version: '3.8'
+
+services:
+  # ... (redis, meilisearch) ...
+
+  catalog.api:
+    container_name: catalog.api
+    build:
+      context: .
+      dockerfile: Catalog.Api/Dockerfile
+    ports:
+      - "8000:8080"
+    volumes: # <-- AÑADE ESTA SECCIÓN
+      - catalog_data:/app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      - redis
+    networks:
+      - backend
+
+  # ... (media.service, search.service, gateway.yarp) ...
+
+volumes:
+  media_uploads:
+  meili_data:
+  catalog_data: # <-- AÑADE ESTA LÍNEA
+
+networks:
+  backend:
+    driver: bridge

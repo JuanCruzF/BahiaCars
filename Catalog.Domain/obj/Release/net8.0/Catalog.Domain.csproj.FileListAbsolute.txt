@@ -1,0 +1,11 @@
+C:\BahiaCars\Catalog.Domain\bin\Release\net8.0\Catalog.Domain.deps.json
+C:\BahiaCars\Catalog.Domain\bin\Release\net8.0\Catalog.Domain.dll
+C:\BahiaCars\Catalog.Domain\bin\Release\net8.0\Catalog.Domain.pdb
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\Catalog.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\Catalog.Domain.AssemblyInfoInputs.cache
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\Catalog.Domain.AssemblyInfo.cs
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\Catalog.Domain.csproj.CoreCompileInputs.cache
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\Catalog.Domain.dll
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\refint\Catalog.Domain.dll
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\Catalog.Domain.pdb
+C:\BahiaCars\Catalog.Domain\obj\Release\net8.0\ref\Catalog.Domain.dll

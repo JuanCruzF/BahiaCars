@@ -1,0 +1,175 @@
+﻿@using Admin.Frontend.Dtos
+
+<div class="bg-gray-900 rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 border border-gray-800 hover:border-gray-700 flex flex-col h-full">
+    <!-- Imagen -->
+    <div class="relative overflow-hidden bg-gray-800 h-48 group">
+        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+             src="@GetImageUrl()"
+             alt="@Vehicle.Brand @Vehicle.Model"
+             onerror="this.src='https://via.placeholder.com/400x300.png?text=Sin+Imagen'" />
+
+        <!-- Overlay gradient -->
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+        <!-- Botón destacado -->
+        <button @onclick="() => OnToggleFeatured.InvokeAsync(Vehicle.Id)"
+                title="@(Vehicle.IsFeatured ? "Quitar de destacados" : "Marcar como destacado")"
+                class="absolute top-3 right-3 p-2 rounded-full bg-gray-900/70 backdrop-blur-sm border border-gray-700 hover:bg-gray-800 transition-all hover:scale-110">
+            <svg class="w-5 h-5 transition-all @(Vehicle.IsFeatured ? "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" : "text-gray-400 hover:text-yellow-400")"
+                 fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+            </svg>
+        </button>
+
+        <!-- Badge de estado -->
+        <div class="absolute top-3 left-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm @GetStatusClass()">
+                @GetStatusInSpanish()
+            </span>
+        </div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="p-4 flex flex-col flex-grow">
+        <!-- Título y specs -->
+        <div class="mb-3">
+            <h4 class="text-lg font-bold text-white mb-1.5 truncate">
+                @Vehicle.Brand @Vehicle.Model
+            </h4>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    @Vehicle.Year
+                </span>
+                <span class="text-gray-600">•</span>
+                <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    @Vehicle.Mileage.ToString("N0") km
+                </span>
+                <span class="text-gray-600">•</span>
+                <span class="px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-full font-medium border border-blue-800/50">
+                    @Vehicle.VehicleType
+                </span>
+            </div>
+        </div>
+
+        <!-- Precio -->
+        <div class="mb-4">
+            @if (Vehicle.Price.HasValue)
+            {
+                <p class="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text">
+                    $@Vehicle.Price.Value.ToString("N0")
+                </p>
+            }
+            else
+            {
+                <p class="text-lg font-semibold text-gray-500">
+                    Consultar Precio
+                </p>
+            }
+        </div>
+
+        <!-- Acciones principales -->
+        <div class="mt-auto pt-3 flex gap-2 border-t border-gray-800">
+            @if (Vehicle.Status != VehicleStatus.Sold)
+            {
+                <NavLink href="@($"/vehicles/edit/{Vehicle.Id}")"
+                         class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg transition-all text-sm font-medium border border-gray-700 hover:border-gray-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    <span>Editar</span>
+                </NavLink>
+            }
+            <button @onclick="() => OnDelete.InvokeAsync(Vehicle)"
+                    class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 hover:text-red-300 rounded-lg transition-all text-sm font-medium border border-red-900/50 hover:border-red-800">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                <span>Eliminar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Acciones de estado -->
+    <div class="bg-gray-800/50 border-t border-gray-800 p-3">
+        @if (Vehicle.Status == VehicleStatus.Available)
+        {
+            <div class="grid grid-cols-2 gap-2">
+                <button @onclick="@(() => OnChangeStatus.InvokeAsync(Tuple.Create(Vehicle.Id, "reserve")))"
+                        class="px-3 py-2 bg-yellow-900/20 hover:bg-yellow-900/40 text-yellow-400 hover:text-yellow-300 rounded-lg transition-all text-xs font-medium border border-yellow-900/50 hover:border-yellow-800">
+                    📋 Reservar
+                </button>
+                <button @onclick="@(() => OnChangeStatus.InvokeAsync(Tuple.Create(Vehicle.Id, "sell")))"
+                        class="px-3 py-2 bg-green-900/20 hover:bg-green-900/40 text-green-400 hover:text-green-300 rounded-lg transition-all text-xs font-medium border border-green-900/50 hover:border-green-800">
+                    ✓ Vender
+                </button>
+            </div>
+        }
+        else if (Vehicle.Status == VehicleStatus.Reserved)
+        {
+            <div class="grid grid-cols-2 gap-2">
+                <button @onclick="@(() => OnChangeStatus.InvokeAsync(Tuple.Create(Vehicle.Id, "make-available")))"
+                        class="px-3 py-2 bg-blue-900/20 hover:bg-blue-900/40 text-blue-400 hover:text-blue-300 rounded-lg transition-all text-xs font-medium border border-blue-900/50 hover:border-blue-800">
+                    ↻ Disponible
+                </button>
+                <button @onclick="@(() => OnChangeStatus.InvokeAsync(Tuple.Create(Vehicle.Id, "sell")))"
+                        class="px-3 py-2 bg-green-900/20 hover:bg-green-900/40 text-green-400 hover:text-green-300 rounded-lg transition-all text-xs font-medium border border-green-900/50 hover:border-green-800">
+                    ✓ Vender
+                </button>
+            </div>
+        }
+        else if (Vehicle.Status == VehicleStatus.Sold)
+        {
+            <div class="text-center py-2">
+                <span class="text-xs text-gray-500 font-medium">🔒 Vehículo vendido</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public VehicleResponse Vehicle { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<VehicleResponse> OnDelete { get; set; }
+
+    [Parameter]
+    public EventCallback<Tuple<Guid, string>> OnChangeStatus { get; set; }
+
+    [Parameter] public EventCallback<Guid> OnToggleFeatured { get; set; }
+
+    [Inject]
+    private HttpClient Http { get; set; } = default!;
+
+    private string GetImageUrl()
+    {
+        var imageUrl = Vehicle.Images?.OrderBy(i => i.Position).FirstOrDefault()?.Url;
+        if (!string.IsNullOrEmpty(imageUrl))
+        {
+            return $"{Http.BaseAddress}api/media{imageUrl}";
+        }
+        return "https://via.placeholder.com/400x300.png?text=Sin+Imagen";
+    }
+
+    private string GetStatusClass() => Vehicle.Status switch
+    {
+        VehicleStatus.Available => "bg-green-800 text-green-200",
+        VehicleStatus.Reserved => "bg-yellow-800 text-yellow-200",
+        VehicleStatus.Sold => "bg-red-800 text-red-200",
+        _ => "bg-gray-700 text-gray-300"
+    };
+
+    private string GetStatusInSpanish() => Vehicle.Status switch
+    {
+        VehicleStatus.Available => "Disponible",
+        VehicleStatus.Reserved => "Reservado",
+        VehicleStatus.Sold => "Vendido",
+        _ => "Desconocido"
+    };
+}

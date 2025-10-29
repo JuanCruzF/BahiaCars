@@ -1,0 +1,63 @@
+{
+    "Routes": [
+        {
+            "UpstreamPathTemplate": "/api/catalog/auth/login",
+            "UpstreamHttpMethod": [ "POST", "OPTIONS" ],
+            "DownstreamPathTemplate": "/api/auth/login",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "catalog.api",
+                    "Port": 8080
+                }
+            ]
+        },
+        {
+            "UpstreamPathTemplate": "/api/catalog/{everything}",
+            "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "OPTIONS" ],
+            "DownstreamPathTemplate": "/api/{everything}",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "catalog.api",
+                    "Port": 8080
+                }
+            ],
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer",
+                "AllowedScopes": []
+            }
+        },
+        {
+            "UpstreamPathTemplate": "/api/media/{everything}",
+            "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+            "DownstreamPathTemplate": "/api/media/{everything}",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "media.service",
+                    "Port": 8080
+                }
+            ]
+        },
+        {
+            "UpstreamPathTemplate": "/api/search",
+            "UpstreamHttpMethod": [ "GET", "OPTIONS" ],
+            "DownstreamPathTemplate": "/api/search",
+            "DownstreamScheme": "http",
+            "DownstreamHostAndPorts": [
+                {
+                    "Host": "search.service",
+                    "Port": 8080
+                }
+            ]
+        }
+    ]
+}
+/* 
+UpstreamPathTemplate: Es la URL p�blica que ver� el frontend. http://localhost:5000/api/catalog/vehicles.
+
+DownstreamPathTemplate: Es la URL interna a la que Ocelot redirigir� la petici�n.
+
+DownstreamHostAndPorts: catalog.api es el nombre que le daremos a nuestro Catalog Service en Docker Compose m�s adelante.
+*/

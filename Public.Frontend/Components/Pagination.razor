@@ -1,0 +1,26 @@
+﻿@if (PagedResult != null && PagedResult.TotalPages > 1)
+{
+    <div class="mt-8 flex justify-center items-center gap-4">
+        <button @onclick="() => OnPageChange.InvokeAsync(PagedResult.PageNumber - 1)"
+                disabled="@(!PagedResult.HasPreviousPage)"
+                class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            &larr; Anterior
+        </button>
+        <span class="text-gray-400">
+            Página @PagedResult.PageNumber de @PagedResult.TotalPages
+        </span>
+        <button @onclick="() => OnPageChange.InvokeAsync(PagedResult.PageNumber + 1)"
+                disabled="@(!PagedResult.HasNextPage)"
+                class="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            Siguiente &rarr;
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public PagedResult<VehicleResponse>? PagedResult { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageChange { get; set; }
+}

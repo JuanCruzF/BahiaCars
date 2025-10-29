@@ -1,0 +1,15 @@
+C:\BahiaCars\Catalog.Application\bin\Release\net8.0\Catalog.Application.deps.json
+C:\BahiaCars\Catalog.Application\bin\Release\net8.0\Catalog.Application.dll
+C:\BahiaCars\Catalog.Application\bin\Release\net8.0\Catalog.Application.pdb
+C:\BahiaCars\Catalog.Application\bin\Release\net8.0\Catalog.Domain.dll
+C:\BahiaCars\Catalog.Application\bin\Release\net8.0\Catalog.Domain.pdb
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.csproj.AssemblyReference.cache
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.AssemblyInfoInputs.cache
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.AssemblyInfo.cs
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.csproj.CoreCompileInputs.cache
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog..75771DFE.Up2Date
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.dll
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\refint\Catalog.Application.dll
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\Catalog.Application.pdb
+C:\BahiaCars\Catalog.Application\obj\Release\net8.0\ref\Catalog.Application.dll

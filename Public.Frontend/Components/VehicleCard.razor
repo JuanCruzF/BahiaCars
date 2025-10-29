@@ -1,0 +1,40 @@
+﻿@using Public.Frontend.Dtos
+
+<div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
+    <NavLink href="@($"/vehicle/{Vehicle.Id}")" class="block">
+        <img class="w-full h-96 object-cover"
+             src="@GetImageUrl()"
+             alt="@($"{Vehicle.Brand} {Vehicle.Model}")"
+             onerror="this.src='https://via.placeholder.com/400x300.png?text=Sin+Imagen'" />
+    </NavLink>
+    <div class="p-4 flex flex-col flex-grow">
+        <h3 class="text-lg font-bold text-white">@Vehicle.Brand @Vehicle.Model</h3>
+        <p class="text-sm text-gray-400">@Vehicle.Year | @Vehicle.Mileage.ToString("N0") km</p>
+        @if (Vehicle.Price.HasValue)
+        {
+            <p class="mt-2 text-xl font-semibold text-blue-400">$@Vehicle.Price.Value.ToString("N0")</p>
+        }
+        else
+        {
+            <p class="mt-2 text-md font-semibold text-gray-300">Consultar</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public VehicleResponse Vehicle { get; set; } = default!;
+
+    [Inject]
+    private HttpClient Http { get; set; } = default!;
+
+    private string GetImageUrl()
+    {
+        var imageUrl = Vehicle.Images?.OrderBy(i => i.Position).FirstOrDefault()?.Url;
+        if (!string.IsNullOrEmpty(imageUrl))
+        {
+            return $"{Http.BaseAddress}api/media{imageUrl}";
+        }
+        return "https://via.placeholder.com/400x300.png?text=Sin+Imagen";
+    }
+}

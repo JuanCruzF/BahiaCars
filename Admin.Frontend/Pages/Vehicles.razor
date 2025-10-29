@@ -1,0 +1,246 @@
+﻿@page "/vehicles"
+@layout EmptyLayout
+@attribute [Authorize]
+@implements IDisposable
+
+@using Microsoft.JSInterop
+@using Admin.Frontend.Components
+@using Admin.Frontend.Dtos
+
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<div class="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
+    <div class="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800/50 shadow-lg">
+        <div class="max-w-7xl mx-auto p-4 flex items-center justify-between">
+            <div class="flex items-center flex-1 min-w-0">
+                <NavLink href="/" class="p-2 rounded-full hover:bg-gray-800 transition-all duration-300 hover:scale-110 flex-shrink-0">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </NavLink>
+                <div class="ml-3 min-w-0">
+                    <h3 class="text-xl sm:text-2xl font-bold text-white truncate">Vehículos</h3>
+                    @if (pagedResult != null)
+                    {
+                        <p class="text-sm text-gray-400 hidden sm:block">@pagedResult.TotalCount vehículo@(pagedResult.TotalCount != 1 ? "s" : "") en total</p>
+                    }
+                </div>
+            </div>
+            <NavLink href="/vehicles/new" class="ml-3 px-4 py-2.5 sm:px-5 font-semibold text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-blue-500/50 flex items-center flex-shrink-0">
+                <svg class="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span class="hidden sm:inline">Agregar</span>
+            </NavLink>
+        </div>
+    </div>
+
+    <div class="p-4 sm:p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-6">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" placeholder="Buscar por marca y modelo..."
+                           class="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           @bind="SearchTerm" @bind:event="oninput" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="mb-4 p-3 bg-red-800/50 text-red-200 rounded-lg">@errorMessage</div>
+            }
+
+            @if (pagedResult == null)
+            {
+                <div class="flex flex-col items-center justify-center py-24"><p>Cargando vehículos...</p></div>
+            }
+            else if (!pagedResult.Items.Any())
+            {
+                <div class="flex flex-col items-center justify-center py-24">
+                    <h4 class="text-2xl font-bold text-white mb-2">No se encontraron vehículos</h4>
+                    <p class="text-gray-400">Prueba con otra búsqueda o agrega un nuevo vehículo.</p>
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    @foreach (var vehicle in pagedResult.Items)
+                    {
+                        <VehicleCard Vehicle="vehicle" OnDelete="HandleDeleteRequest" OnChangeStatus="HandleChangeStatus" OnToggleFeatured="HandleToggleFeatured" />
+                    }
+                </div>
+
+                <div class="mt-8 flex justify-center items-center gap-4">
+                    <button @onclick="() => GoToPage(pagedResult.PageNumber - 1)" disabled="@(!pagedResult.HasPreviousPage)" class="pagination-button">
+                        &larr; Anterior
+                    </button>
+                    <span class="text-gray-400">
+                        Página @pagedResult.PageNumber de @pagedResult.TotalPages
+                    </span>
+                    <button @onclick="() => GoToPage(pagedResult.PageNumber + 1)" disabled="@(!pagedResult.HasNextPage)" class="pagination-button">
+                        Siguiente &rarr;
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private PagedResult<VehicleResponse>? pagedResult;
+    private string? errorMessage;
+    private string _searchTerm = string.Empty;
+    private System.Threading.Timer? _debounceTimer;
+    private int currentPage = 1;
+
+    private async Task HandleToggleFeatured(Guid vehicleId)
+    {
+        errorMessage = null;
+        try
+        {
+            var response = await Http.PostAsync($"api/vehicles/{vehicleId}/toggle-featured", null);
+            if (response.IsSuccessStatusCode)
+            {
+                // Actualiza la UI sin recargar toda la página
+                var vehicleToUpdate = pagedResult?.Items.FirstOrDefault(v => v.Id == vehicleId);
+                if (vehicleToUpdate != null)
+                {
+                    vehicleToUpdate.IsFeatured = !vehicleToUpdate.IsFeatured;
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                errorMessage = "No se pudo cambiar el estado de destacado.";
+            }
+        }
+        catch (Exception) { errorMessage = "Error de conexión."; }
+    }
+
+    private string SearchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            _searchTerm = value;
+            _debounceTimer?.Change(300, System.Threading.Timeout.Infinite);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _debounceTimer = new System.Threading.Timer(async _ => await PerformSearch(), null, -1, -1);
+        await LoadVehicles(currentPage);
+    }
+
+    private async Task PerformSearch()
+    {
+        errorMessage = null;
+        if (string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            await LoadVehicles(1);
+        }
+        else
+        {
+            try
+            {
+                var encodedSearchTerm = Uri.EscapeDataString(SearchTerm);
+                var searchResults = await Http.GetFromJsonAsync<List<VehicleResponse>>($"api/search?query={encodedSearchTerm}");
+                pagedResult = new PagedResult<VehicleResponse>
+                {
+                    Items = searchResults ?? new(),
+                    TotalCount = searchResults?.Count ?? 0,
+                    PageNumber = 1,
+                    PageSize = searchResults?.Count ?? 1,
+                    TotalPages = 1
+                };
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Error al realizar la búsqueda.";
+                Console.WriteLine($"Error en la búsqueda: {ex.Message}");
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadVehicles(int pageNumber = 1)
+    {
+        errorMessage = null;
+        try
+        {
+            pagedResult = await Http.GetFromJsonAsync<PagedResult<VehicleResponse>>($"api/vehicles?pageNumber={pageNumber}&pageSize=8");
+            currentPage = pageNumber;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "No se pudieron cargar los vehículos.";
+            Console.WriteLine($"Error al cargar vehículos: {ex.Message}");
+            pagedResult = new PagedResult<VehicleResponse>();
+        }
+    }
+
+    private async Task GoToPage(int pageNumber)
+    {
+        if (pageNumber < 1 || pagedResult == null || pageNumber > pagedResult.TotalPages) return;
+        await LoadVehicles(pageNumber);
+    }
+
+    private async Task HandleDeleteRequest(VehicleResponse vehicleToDelete)
+    {
+        errorMessage = null;
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar {vehicleToDelete.Brand} {vehicleToDelete.Model}?");
+        if (confirmed)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/vehicles/{vehicleToDelete.Id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    // ✅ LÓGICA DE PAGINACIÓN INTELIGENTE
+                    int pageToLoad = currentPage;
+                    if (pagedResult?.Items.Count == 1 && currentPage > 1)
+                    {
+                        // Si estamos borrando el último ítem de una página que no es la primera,
+                        // volvemos a la página anterior.
+                        pageToLoad = currentPage - 1;
+                    }
+                    await LoadVehicles(pageToLoad);
+                }
+                else
+                {
+                    errorMessage = "No se pudo borrar el vehículo.";
+                }
+            }
+            catch (Exception) { errorMessage = "Error de conexión al borrar."; }
+        }
+    }
+
+    private async Task HandleChangeStatus(Tuple<Guid, string> args)
+    {
+        errorMessage = null;
+        var (vehicleId, action) = args;
+        var endpoint = action.Trim() switch
+        {
+            "reserve" => $"api/vehicles/{vehicleId}/reserve",
+            "sell" => $"api/vehicles/{vehicleId}/sell",
+            "make-available" => $"api/vehicles/{vehicleId}/make-available",
+            _ => null
+        };
+        if (endpoint == null) return;
+
+        try
+        {
+            var response = await Http.PostAsync(endpoint, null);
+            if (response.IsSuccessStatusCode) await LoadVehicles(currentPage);
+            else errorMessage = "No se pudo cambiar el estado.";
+        }
+        catch (Exception) { errorMessage = "Error de conexión al cambiar estado."; }
+    }
+
+    public void Dispose() => _debounceTimer?.Dispose();
+}
